@@ -28,6 +28,8 @@ a{color:inherit;text-decoration:none}
 .look{position:relative;height:100%;scroll-snap-align:start;scroll-snap-stop:always;overflow:hidden;background:#101010}
 .look img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:center;opacity:0;transition:opacity .7s ease}
 .look.loaded img{opacity:1}
+.bg{position:absolute;inset:-40px;display:none;background:center/cover no-repeat;filter:blur(30px) brightness(.5);transform:scale(1.1)}
+.look.band .bg{display:block}
 .look::after{content:"";position:absolute;inset:0;pointer-events:none;z-index:1;
   background:linear-gradient(to bottom,rgba(0,0,0,.6) 0,rgba(0,0,0,0) 24%,rgba(0,0,0,0) 76%,rgba(0,0,0,.5) 100%)}
 
@@ -110,6 +112,16 @@ a{color:inherit;text-decoration:none}
 .edit .panel{display:block}
 .panel button{display:block;margin-bottom:8px;padding:6px 10px;border:1px solid var(--line);border-radius:8px;color:#fff;font:600 11px sans-serif}
 
+.rotate{display:none}
+@media (orientation:landscape) and (max-height:540px) and (pointer:coarse){
+  .rotate{display:flex;position:fixed;inset:0;z-index:100;background:var(--bg);flex-direction:column;align-items:center;justify-content:center;gap:14px;text-align:center;padding:24px}
+  .rotate svg{width:40px;height:40px;animation:tilt 2.4s ease-in-out infinite}
+  .rotate p{font-size:17px;font-weight:600}
+  .rotate small{font-size:13px;color:var(--muted)}
+  .app{visibility:hidden}
+}
+@keyframes tilt{0%,30%{transform:rotate(-90deg)}60%,100%{transform:rotate(0)}}
+
 @media (prefers-reduced-motion:reduce){
   .hs i::after,.hint svg{animation:none}
   .sheet,.look img{transition:none}
@@ -124,6 +136,11 @@ a{color:inherit;text-decoration:none}
 </style>
 </head>
 <body>
+<div class="rotate" role="alert">
+  <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.6" stroke-linecap="round"><rect x="6" y="2" width="12" height="20" rx="2.5"/><path d="M11 18.5h2"/></svg>
+  <p>Turn your phone upright</p>
+  <small>Shop the Look is made for portrait.</small>
+</div>
 <div class="app oncover" id="app">
   <main class="feed" id="feed" aria-label="On athletes"></main>
 
@@ -148,33 +165,33 @@ a{color:inherit;text-decoration:none}
    Hotspot x/y are fractions of the source image (0–1), so they stay on the product
    regardless of how the image is cropped on a given screen. Open with ?edit to drag them. */
 const LOOKS = [
-  { name:"Ben Shelton", slug:"ben-shelton", local:"images/shelton.jpg", desc:"Tennis — United States",
+  { name:"Ben Shelton", slug:"ben-shelton", local:"images/shelton.jpg", show:.34, focus:[.51,.5], desc:"Tennis — United States",
     img:"https://www.atptour.com/-/media/images/news/2026/09/13/22/09/shelton-us-open-2026-final-reaction-sunday.jpg",
     products:[
-      { name:"Court Tank", cat:"Top", url:"https://on.ae/products/court-tank?variant=47016819294346", x:.50, y:.45 },
-      { name:"THE ROGER Pro 3", cat:"Shoes", url:"https://on.ae/products/the-roger-pro-3?variant=50091741315210", x:.50, y:.92 }
+      { name:"Court Tank", cat:"Top", url:"https://on.ae/products/court-tank?variant=47016819294346", x:.54, y:.27 },
+      { name:"THE ROGER Pro 3", cat:"Shoes", url:"https://on.ae/products/the-roger-pro-3?variant=50091741315210", x:.415, y:.92 }
     ]},
   { name:"Roger Federer", slug:"roger-federer", local:"images/federer.jpg", desc:"Tennis — Switzerland",
     img:"https://cdn.assets.prezly.com/2a646848-1ee0-4a6c-a0ea-cfa72bbc2394/-/resize/1200/Create%20Small%20JPG-fw26-the_roger_centre_court_hall_of_fame-pte-head_to_toe_still-Roger_Federer-05.jpg",
     products:[
       { name:"Focus Tech Crew", cat:"Top", url:"https://on.ae/products/focus-tech-crew?variant=49685600698506", x:.50, y:.34 },
-      { name:"THE ROGER Centre Court", cat:"Shoes", url:"https://on.ae/products/the-roger-centre-court?variant=47637508423818", x:.48, y:.91 }
+      { name:"THE ROGER Centre Court", cat:"Shoes", url:"https://on.ae/products/the-roger-centre-court?variant=47637508423818", x:.55, y:.78 }
     ]},
   { name:"Zendaya", slug:"zendaya", local:"images/zendaya.avif", desc:"Actress & On ambassador",
     img:"https://on.ae/cdn/shop/files/fw26-zendaya_brand_build-pad-head_to_toe_still-srgb-11.avif?v=1790862940&width=1200",
     products:[
-      { name:"Parachute Pants", cat:"Bottoms", url:"https://on.ae/products/parachute-pants?variant=50330983235722", x:.52, y:.62 },
-      { name:"Cloudnova Moon Mary Jane", cat:"Shoes", url:"https://on.ae/products/cloudnova-moon-mary-jane", x:.50, y:.93 }
+      { name:"Parachute Pants", cat:"Bottoms", url:"https://on.ae/products/parachute-pants?variant=50330983235722", x:.70, y:.46 },
+      { name:"Cloudnova Moon Mary Jane", cat:"Shoes", url:"https://on.ae/products/cloudnova-moon-mary-jane", x:.64, y:.65 }
     ]},
-  { name:"Sydney Mobasser", slug:"sydney-mobasser", local:"images/mobasser.avif", desc:"Football — Switzerland",
+  { name:"Sydney Joy Schertenleib", slug:"sydney-schertenleib", local:"images/mobasser.avif", desc:"Football — Switzerland",
     img:"https://on.ae/cdn/shop/files/3.avif?v=1789979999&width=3840",
     products:[
-      { name:"Track Pack 35L Lite", cat:"Bag", url:"https://on.ae/products/track-pack-35l-lite?variant=49926567723146", x:.62, y:.36 }
+      { name:"Track Pack 35L Lite", cat:"Bag", url:"https://on.ae/products/track-pack-35l-lite?variant=49926567723146", x:.46, y:.70 }
     ]},
-  { name:"Henry", slug:"henry", local:"images/henry.avif", desc:"On athlete",
+  { name:"Thierry Henry", slug:"thierry-henry", local:"images/henry.avif", desc:"Football — France",
     img:"https://on.ae/cdn/shop/files/1_bba573ca-7b81-4dc9-b560-08524140352b.avif?v=1789979999&width=1200",
     products:[
-      { name:"Courtside Full-Zip", cat:"Jacket", url:"https://on.ae/products/courtside-full-zip?variant=49926560776330", x:.50, y:.40 }
+      { name:"Courtside Full-Zip", cat:"Jacket", url:"https://on.ae/products/courtside-full-zip?variant=49926560776330", x:.63, y:.36 }
     ]}
 ];
 
@@ -243,11 +260,11 @@ feed.appendChild(cover);
 LOOKS.forEach((l,i)=>{
   const s=document.createElement('section');
   s.className='look'; s.dataset.i=i; s.setAttribute('aria-label',l.name);
-  s.innerHTML=`<div class="ph"><span>${esc(l.name)}</span></div>
+  s.innerHTML=`<div class="ph"><span>${esc(l.name)}</span></div><div class="bg"></div>
     <img alt="${esc(l.name)} wearing On" decoding="async" referrerpolicy="no-referrer" ${i<2?'fetchpriority="high"':'loading="lazy"'}>
     <header class="id"><h2>${esc(l.name)}</h2><p>${esc(l.desc)}</p></header>`;
   const img=s.querySelector('img');
-  img.onload=()=>{ s.classList.add('loaded'); place(s); };
+  img.onload=()=>{ s.classList.add('loaded'); s.querySelector('.bg').style.backgroundImage=`url("${img.currentSrc||img.src}")`; place(s); };
   /* Try the copy in images/ first, then the original URL, then the dark name placeholder */
   const srcs=[l.local,l.img].filter(Boolean);
   img.onerror=()=>{ srcs.shift(); if(srcs.length) img.src=srcs[0]; else { s.classList.add('noimg'); img.remove(); place(s); } };
@@ -272,10 +289,17 @@ function place(s){
   const W=s.clientWidth, H=s.clientHeight;
   let map, inv;
   if(img && s.classList.contains('loaded') && img.naturalWidth){
-    const iw=img.naturalWidth, ih=img.naturalHeight, k=Math.max(W/iw,H/ih);
-    const ox=(W-iw*k)/2, oy=(H-ih*k)/2;
-    map=(x,y)=>[ox+x*iw*k, oy+y*ih*k];
-    inv=(px,py)=>[(px-ox)/(iw*k), (py-oy)/(ih*k)];
+    const iw=img.naturalWidth, ih=img.naturalHeight;
+    let k=Math.max(W/iw,H/ih);
+    if(l.show) k=Math.max(Math.min(W/iw,H/ih), Math.min(k, W/(iw*l.show), H/(ih*l.show)));
+    const [fx,fy]=l.focus||[.5,.5], w=iw*k, h=ih*k;
+    const ox = w>W ? clamp(W/2-fx*w, W-w, 0) : (W-w)/2;
+    const oy = h>H ? clamp(H/2-fy*h, H-h, 0) : (H-h)/2;
+    const band = w<W-1 || h<H-1;
+    s.classList.toggle('band',band);
+    Object.assign(img.style,{inset:'auto',left:ox+'px',top:oy+'px',width:w+'px',height:h+'px'});
+    map=(x,y)=>[ox+x*w, oy+y*h];
+    inv=(px,py)=>[(px-ox)/w, (py-oy)/h];
   } else {
     map=(x,y)=>[x*W, y*H];
     inv=(px,py)=>[px/W, py/H];
@@ -285,13 +309,13 @@ function place(s){
     const p=l.products[b.dataset.j];
     const [px,py]=map(p.x,p.y);
     b.style.left=clamp(px,30,W-30)+'px';
-    b.style.top=clamp(py,112,H-34)+'px';
+    b.style.top=clamp(py,112,H-64)+'px';
   });
   s.classList.add('placed');
 }
 const placeAll=()=>document.querySelectorAll('.look').forEach(place);
 placeAll();
-addEventListener('resize',placeAll);
+addEventListener('resize',()=>{ placeAll(); feed.scrollTop=(active+1)*feed.clientHeight; });
 
 /* ---------- Active ambassador ---------- */
 const io=new IntersectionObserver(es=>{
