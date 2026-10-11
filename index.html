@@ -1,0 +1,410 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0a0a0a">
+<title>On Athletes — Shop the Look</title>
+<style>
+:root{
+  --bg:#0a0a0a; --fg:#fff; --muted:rgba(255,255,255,.64); --faint:rgba(255,255,255,.28);
+  --line:rgba(255,255,255,.12); --sheet:#141414;
+  --sat:env(safe-area-inset-top,0px); --sab:env(safe-area-inset-bottom,0px);
+  --ease:cubic-bezier(.2,.8,.2,1);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;background:var(--bg);color:var(--fg);overflow:hidden;
+  font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","Helvetica Neue",Helvetica,Arial,sans-serif;
+  -webkit-font-smoothing:antialiased;-webkit-tap-highlight-color:transparent}
+button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
+a{color:inherit;text-decoration:none}
+
+/* ---------- Shell ---------- */
+.app{position:relative;width:100%;height:100svh;overflow:hidden;background:var(--bg)}
+.feed{height:100%;overflow-y:auto;scroll-snap-type:y mandatory;overscroll-behavior:contain;scrollbar-width:none}
+.feed::-webkit-scrollbar{display:none}
+
+/* ---------- One ambassador per screen ---------- */
+.look{position:relative;height:100%;scroll-snap-align:start;scroll-snap-stop:always;overflow:hidden;background:#101010}
+.look img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:center;opacity:0;transition:opacity .7s ease}
+.look.loaded img{opacity:1}
+.look::after{content:"";position:absolute;inset:0;pointer-events:none;z-index:1;
+  background:linear-gradient(to bottom,rgba(0,0,0,.6) 0,rgba(0,0,0,0) 24%,rgba(0,0,0,0) 76%,rgba(0,0,0,.5) 100%)}
+
+/* Placeholder: loading state, and the fallback if an image is blocked */
+.ph{position:absolute;inset:0;display:grid;place-items:center;background:radial-gradient(120% 80% at 50% 40%,#1c1c1c 0,#0c0c0c 70%)}
+.ph span{font-size:44px;font-weight:600;letter-spacing:-.02em;line-height:1;text-align:center;padding:0 24px;color:rgba(255,255,255,.06);transition:color .4s}
+.look.noimg .ph span{color:rgba(255,255,255,.14)}
+.look.loaded .ph{display:none}
+
+/* Identity block */
+.id{position:absolute;z-index:2;left:20px;right:72px;top:calc(var(--sat) + 30px)}
+.id h2{font-size:26px;font-weight:600;letter-spacing:-.015em;line-height:1.1}
+.id p{margin-top:6px;font-size:13px;color:var(--muted);letter-spacing:.01em}
+
+/* ---------- Cover ---------- */
+.cover{position:relative;height:100%;scroll-snap-align:start;scroll-snap-stop:always;display:flex;flex-direction:column;justify-content:flex-end;
+  padding:0 20px calc(var(--sab) + 72px);background:radial-gradient(120% 70% at 75% 15%,#1e1e1e 0,#0a0a0a 62%)}
+.cover .eyebrow{margin-bottom:14px}
+.cover h1{font-size:44px;font-weight:600;letter-spacing:-.03em;line-height:1}
+.lede{margin-top:14px;font-size:15px;line-height:1.45;color:var(--muted);max-width:30ch}
+.index{margin-top:32px;list-style:none;border-top:1px solid var(--line)}
+.index button{width:100%;min-height:48px;display:flex;align-items:center;gap:14px;border-bottom:1px solid var(--line);text-align:left;font-size:15px}
+.index span{width:20px;font-size:11px;color:var(--muted);letter-spacing:.06em;font-variant-numeric:tabular-nums}
+.index em{margin-left:auto;font-style:normal;font-size:12px;color:var(--muted)}
+
+/* ---------- Hotspots (44px tap target, 12px visual) ---------- */
+.hs{position:absolute;z-index:3;width:44px;height:44px;margin:-22px 0 0 -22px;display:grid;place-items:center;touch-action:manipulation;opacity:0;transition:opacity .4s}
+.placed .hs{opacity:1}
+.hs i{position:relative;width:12px;height:12px;border-radius:50%;background:#fff;box-shadow:0 0 0 1px rgba(0,0,0,.25),0 2px 8px rgba(0,0,0,.4);transition:transform .25s var(--ease)}
+.hs i::after{content:"";position:absolute;inset:-1px;border-radius:50%;border:1.5px solid rgba(255,255,255,.9);animation:pulse 2.2s var(--ease) infinite;animation-delay:inherit}
+.hs:active i,.hs.sel i{transform:scale(1.35)}
+.hs:focus-visible{outline:none}
+.hs:focus-visible i{box-shadow:0 0 0 3px rgba(255,255,255,.4)}
+@keyframes pulse{0%{transform:scale(1);opacity:.9}80%,100%{transform:scale(2.8);opacity:0}}
+
+/* ---------- Fixed chrome ---------- */
+.progress{position:absolute;z-index:10;top:calc(var(--sat) + 10px);left:12px;right:12px;display:flex;gap:4px;pointer-events:none}
+.progress b{flex:1;height:2px;border-radius:2px;background:var(--faint);transition:background .3s}
+.progress b.on{background:#fff}
+.mark{position:absolute;z-index:10;top:calc(var(--sat) + 30px);right:20px;font-size:12px;font-weight:600;letter-spacing:.04em;color:var(--muted);pointer-events:none}
+
+.stl{position:absolute;z-index:10;left:12px;bottom:calc(var(--sab) + 12px);height:44px;padding:0 8px;display:flex;align-items:center;gap:8px;
+  font-size:11px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:rgba(255,255,255,.88)}
+.stl::before{content:"";width:6px;height:6px;border-radius:50%;background:#fff}
+.stl em{font-style:normal;color:var(--muted);letter-spacing:.06em}
+.stl{transition:opacity .3s}
+.oncover .stl{opacity:0;pointer-events:none}
+
+.hint{position:absolute;z-index:10;right:12px;bottom:calc(var(--sab) + 12px);width:44px;height:44px;display:grid;place-items:center;transition:opacity .4s}
+.hint svg{width:18px;height:18px;animation:nudge 1.8s ease-in-out infinite}
+.hint.gone{opacity:0;pointer-events:none}
+@keyframes nudge{0%,100%{transform:translateY(-3px);opacity:.5}50%{transform:translateY(3px);opacity:1}}
+
+/* ---------- Bottom sheet ---------- */
+.scrim{position:absolute;inset:0;z-index:20;background:rgba(0,0,0,.45);opacity:0;pointer-events:none;transition:opacity .3s}
+.scrim.on{opacity:1;pointer-events:auto}
+.sheet{position:absolute;z-index:21;left:0;right:0;bottom:0;background:var(--sheet);border-radius:20px 20px 0 0;
+  padding:8px 20px calc(var(--sab) + 20px);transform:translateY(105%);transition:transform .38s var(--ease);
+  touch-action:none;user-select:none;-webkit-user-select:none;box-shadow:0 -10px 40px rgba(0,0,0,.5)}
+.sheet.on{transform:translateY(0)}
+.grab{display:block;width:100%;height:24px;position:relative}
+.grab::after{content:"";position:absolute;left:50%;top:8px;width:36px;height:4px;margin-left:-18px;border-radius:4px;background:rgba(255,255,255,.22)}
+.eyebrow{font-size:11px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
+.sheet h3{margin-top:8px;font-size:22px;font-weight:600;letter-spacing:-.01em;line-height:1.2}
+.cta{margin-top:20px;height:52px;border-radius:26px;background:#fff;color:#000;display:flex;align-items:center;justify-content:center;gap:8px;font-size:15px;font-weight:600;transition:transform .15s}
+.cta:active{transform:scale(.98)}
+.more{margin-top:24px}
+.row{min-height:56px;display:flex;align-items:center;justify-content:space-between;gap:16px;border-top:1px solid var(--line)}
+.row:last-child{border-bottom:1px solid var(--line)}
+.row b{display:block;font-size:15px;font-weight:500}
+.row small{display:block;margin-top:2px;font-size:12px;color:var(--muted)}
+.row .arr{color:var(--muted);font-size:16px}
+.more .eyebrow{margin-bottom:8px}
+
+/* ---------- Edit mode (?edit) to fine-tune hotspot positions ---------- */
+.edit .hs{cursor:grab;touch-action:none}
+.edit .hs i{background:#ff3b30}
+.panel{display:none;position:absolute;z-index:30;left:8px;right:8px;bottom:calc(var(--sab) + 64px);max-height:40%;overflow:auto;
+  background:rgba(0,0,0,.85);border:1px solid var(--line);border-radius:12px;padding:10px;font:11px/1.45 ui-monospace,Menlo,monospace;color:#9f9}
+.edit .panel{display:block}
+.panel button{display:block;margin-bottom:8px;padding:6px 10px;border:1px solid var(--line);border-radius:8px;color:#fff;font:600 11px sans-serif}
+
+@media (prefers-reduced-motion:reduce){
+  .hs i::after,.hint svg{animation:none}
+  .sheet,.look img{transition:none}
+}
+
+/* ---------- Desktop stretch: present the mobile design in a device frame ---------- */
+@media (min-width:768px){
+  body{display:grid;place-items:center;background:#050505}
+  .app{width:400px;height:min(860px,calc(100vh - 48px));border-radius:36px;box-shadow:0 0 0 1px #222,0 40px 100px rgba(0,0,0,.7)}
+  .feed{border-radius:inherit}
+}
+</style>
+</head>
+<body>
+<div class="app oncover" id="app">
+  <main class="feed" id="feed" aria-label="On athletes"></main>
+
+  <div class="progress" id="progress" aria-hidden="true"></div>
+  <div class="mark" aria-hidden="true">on.ae</div>
+  <button class="stl" id="stl" aria-haspopup="dialog">Shop the Look <em id="stlCount"></em></button>
+  <button class="hint" id="hint" aria-label="Next athlete">
+    <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>
+  </button>
+
+  <div class="scrim" id="scrim"></div>
+  <section class="sheet" id="sheet" role="dialog" aria-modal="true" aria-label="Product" tabindex="-1">
+    <span class="grab" aria-hidden="true"></span>
+    <div id="sheetBody"></div>
+  </section>
+
+  <div class="panel" id="panel"><button id="copy">Copy positions</button><pre id="out"></pre></div>
+</div>
+
+<script>
+/* Images: put the five files in an images/ folder next to this page (names below).
+   Hotspot x/y are fractions of the source image (0–1), so they stay on the product
+   regardless of how the image is cropped on a given screen. Open with ?edit to drag them. */
+const LOOKS = [
+  { name:"Ben Shelton", slug:"ben-shelton", local:"images/shelton.jpg", desc:"Tennis — United States",
+    img:"https://www.atptour.com/-/media/images/news/2026/09/13/22/09/shelton-us-open-2026-final-reaction-sunday.jpg",
+    products:[
+      { name:"Court Tank", cat:"Top", url:"https://on.ae/products/court-tank?variant=47016819294346", x:.50, y:.45 },
+      { name:"THE ROGER Pro 3", cat:"Shoes", url:"https://on.ae/products/the-roger-pro-3?variant=50091741315210", x:.50, y:.92 }
+    ]},
+  { name:"Roger Federer", slug:"roger-federer", local:"images/federer.jpg", desc:"Tennis — Switzerland",
+    img:"https://cdn.assets.prezly.com/2a646848-1ee0-4a6c-a0ea-cfa72bbc2394/-/resize/1200/Create%20Small%20JPG-fw26-the_roger_centre_court_hall_of_fame-pte-head_to_toe_still-Roger_Federer-05.jpg",
+    products:[
+      { name:"Focus Tech Crew", cat:"Top", url:"https://on.ae/products/focus-tech-crew?variant=49685600698506", x:.50, y:.34 },
+      { name:"THE ROGER Centre Court", cat:"Shoes", url:"https://on.ae/products/the-roger-centre-court?variant=47637508423818", x:.48, y:.91 }
+    ]},
+  { name:"Zendaya", slug:"zendaya", local:"images/zendaya.avif", desc:"Actress & On ambassador",
+    img:"https://on.ae/cdn/shop/files/fw26-zendaya_brand_build-pad-head_to_toe_still-srgb-11.avif?v=1790862940&width=1200",
+    products:[
+      { name:"Parachute Pants", cat:"Bottoms", url:"https://on.ae/products/parachute-pants?variant=50330983235722", x:.52, y:.62 },
+      { name:"Cloudnova Moon Mary Jane", cat:"Shoes", url:"https://on.ae/products/cloudnova-moon-mary-jane", x:.50, y:.93 }
+    ]},
+  { name:"Sydney Mobasser", slug:"sydney-mobasser", local:"images/mobasser.avif", desc:"Football — Switzerland",
+    img:"https://on.ae/cdn/shop/files/3.avif?v=1789979999&width=3840",
+    products:[
+      { name:"Track Pack 35L Lite", cat:"Bag", url:"https://on.ae/products/track-pack-35l-lite?variant=49926567723146", x:.62, y:.36 }
+    ]},
+  { name:"Henry", slug:"henry", local:"images/henry.avif", desc:"On athlete",
+    img:"https://on.ae/cdn/shop/files/1_bba573ca-7b81-4dc9-b560-08524140352b.avif?v=1789979999&width=1200",
+    products:[
+      { name:"Courtside Full-Zip", cat:"Jacket", url:"https://on.ae/products/courtside-full-zip?variant=49926560776330", x:.50, y:.40 }
+    ]}
+];
+
+const $ = id => document.getElementById(id);
+const feed=$('feed'), sheet=$('sheet'), scrim=$('scrim'), body=$('sheetBody'), progress=$('progress');
+const params=new URLSearchParams(location.search);
+const EDIT=params.has('edit');
+const clamp=(v,a,b)=>Math.min(Math.max(v,a),b);
+const esc=s=>s.replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+let active=-1, openIdx=0, lastFocus=null, selBtn=null;
+const seen=new Set();
+
+/* Attribution: every editorial click is tagged so content-driven sessions and cart adds show up in analytics */
+function tag(url, look){
+  const u=new URL(url);
+  u.searchParams.set('utm_source','onae_editorial');
+  u.searchParams.set('utm_medium','shop_the_look');
+  u.searchParams.set('utm_campaign','ambassadors');
+  u.searchParams.set('utm_content',look.slug);
+  return u.toString();
+}
+
+/* ---------- Analytics ----------
+   Paste ONE (or both) IDs below and every interaction is logged.
+   GA4:         Google Analytics → Admin → Data streams → Web → Measurement ID ("G-XXXXXXX")
+   GoatCounter: the "name" part of name.goatcounter.com (free, no cookies)
+   Add ?notrack to the URL for your own visits so they aren't counted. */
+const GA4_ID = '';
+const GOATCOUNTER = '';
+const TRACK = !EDIT && !params.has('notrack');
+const slugify=t=>t.toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'');
+const loadScript=(src,attrs={})=>{const el=document.createElement('script');el.async=true;el.src=src;Object.assign(el.dataset,attrs);document.head.appendChild(el);return el;};
+let gcQueue=[];
+if(TRACK && GA4_ID){
+  window.dataLayer=window.dataLayer||[];
+  window.gtag=function(){dataLayer.push(arguments);};
+  gtag('js',new Date()); gtag('config',GA4_ID);
+  loadScript('https://www.googletagmanager.com/gtag/js?id='+GA4_ID);
+}
+if(TRACK && GOATCOUNTER){
+  loadScript('https://gc.zgo.at/count.js',{goatcounter:`https://${GOATCOUNTER}.goatcounter.com/count`})
+    .onload=()=>{ gcQueue.forEach(e=>window.goatcounter.count(e)); gcQueue=null; };
+}
+/* Events: ambassador_view · hotspot_tap · look_open · shop_click (placement = hotspot | also | look) */
+function track(name,data={}){
+  if(!TRACK) return;
+  if(GA4_ID && window.gtag) gtag('event',name,data);
+  if(GOATCOUNTER){
+    const e={event:true,path:[name,data.ambassador,data.item_name].filter(Boolean).map(slugify).join('/'),
+             title:[data.ambassador,data.item_name,data.placement].filter(Boolean).join(' · ')};
+    gcQueue ? gcQueue.push(e) : window.goatcounter.count(e);
+  }
+}
+
+/* ---------- Cover ---------- */
+const cover=document.createElement('section');
+cover.className='cover'; cover.dataset.i=-1; cover.setAttribute('aria-label','Shop the Look');
+cover.innerHTML=`<p class="eyebrow">On × Athletes</p>
+  <h1>Shop the Look</h1>
+  <p class="lede">${LOOKS.length} athletes. Every piece they wear is tagged. Tap it, shop it on on.ae.</p>
+  <ol class="index">${LOOKS.map((l,i)=>`<li><button data-go="${i}"><span>${String(i+1).padStart(2,'0')}</span>${esc(l.name)}<em>${esc(l.desc.split(' — ')[0])}</em></button></li>`).join('')}</ol>`;
+cover.addEventListener('click',e=>{const b=e.target.closest('[data-go]'); if(b) feed.scrollTo({top:(+b.dataset.go+1)*feed.clientHeight,behavior:'smooth'});});
+feed.appendChild(cover);
+
+/* ---------- Build ---------- */
+LOOKS.forEach((l,i)=>{
+  const s=document.createElement('section');
+  s.className='look'; s.dataset.i=i; s.setAttribute('aria-label',l.name);
+  s.innerHTML=`<div class="ph"><span>${esc(l.name)}</span></div>
+    <img alt="${esc(l.name)} wearing On" decoding="async" referrerpolicy="no-referrer" ${i<2?'fetchpriority="high"':'loading="lazy"'}>
+    <header class="id"><h2>${esc(l.name)}</h2><p>${esc(l.desc)}</p></header>`;
+  const img=s.querySelector('img');
+  img.onload=()=>{ s.classList.add('loaded'); place(s); };
+  /* Try the copy in images/ first, then the original URL, then the dark name placeholder */
+  const srcs=[l.local,l.img].filter(Boolean);
+  img.onerror=()=>{ srcs.shift(); if(srcs.length) img.src=srcs[0]; else { s.classList.add('noimg'); img.remove(); place(s); } };
+  img.src=srcs[0];
+
+  l.products.forEach((p,j)=>{
+    const b=document.createElement('button');
+    b.className='hs'; b.dataset.j=j;
+    b.style.animationDelay=(j*0.6)+'s';
+    b.setAttribute('aria-label',`${p.cat}: ${p.name}`);
+    b.innerHTML='<i style="animation-delay:inherit"></i>';
+    b.addEventListener('click',()=>{ if(!EDIT) openProduct(i,j,b); });
+    s.appendChild(b);
+  });
+  feed.appendChild(s);
+  progress.appendChild(document.createElement('b'));
+});
+
+/* Map image-space coordinates onto the object-fit:cover render box */
+function place(s){
+  const l=LOOKS[s.dataset.i], img=s.querySelector('img');
+  const W=s.clientWidth, H=s.clientHeight;
+  let map, inv;
+  if(img && s.classList.contains('loaded') && img.naturalWidth){
+    const iw=img.naturalWidth, ih=img.naturalHeight, k=Math.max(W/iw,H/ih);
+    const ox=(W-iw*k)/2, oy=(H-ih*k)/2;
+    map=(x,y)=>[ox+x*iw*k, oy+y*ih*k];
+    inv=(px,py)=>[(px-ox)/(iw*k), (py-oy)/(ih*k)];
+  } else {
+    map=(x,y)=>[x*W, y*H];
+    inv=(px,py)=>[px/W, py/H];
+  }
+  s._inv=inv;
+  s.querySelectorAll('.hs').forEach(b=>{
+    const p=l.products[b.dataset.j];
+    const [px,py]=map(p.x,p.y);
+    b.style.left=clamp(px,30,W-30)+'px';
+    b.style.top=clamp(py,112,H-34)+'px';
+  });
+  s.classList.add('placed');
+}
+const placeAll=()=>document.querySelectorAll('.look').forEach(place);
+placeAll();
+addEventListener('resize',placeAll);
+
+/* ---------- Active ambassador ---------- */
+const io=new IntersectionObserver(es=>{
+  es.forEach(e=>{ if(e.isIntersecting) setActive(+e.target.dataset.i); });
+},{root:feed,threshold:.6});
+document.querySelectorAll('.look,.cover').forEach(s=>io.observe(s));
+
+function setActive(i){
+  active=i;
+  $('app').classList.toggle('oncover',i<0);
+  [...progress.children].forEach((b,k)=>b.classList.toggle('on',k<=i));
+  if(i>=1) $('hint').classList.add('gone');
+  if(i<0) return;
+  const n=LOOKS[i].products.length;
+  $('stlCount').textContent='· '+n;
+  $('stl').setAttribute('aria-label',`Shop the look: ${LOOKS[i].name}, ${n} item${n>1?'s':''}`);
+  setTimeout(()=>{ if(active===i && !seen.has(i)){ seen.add(i); track('ambassador_view',{ambassador:LOOKS[i].name}); } },900);
+}
+$('hint').addEventListener('click',()=>feed.scrollBy({top:feed.clientHeight,behavior:'smooth'}));
+$('stl').addEventListener('click',()=>openLook(active));
+
+/* ---------- Sheet content ---------- */
+const rows=(l,list,place)=>list.map(p=>
+  `<a class="row" href="${tag(p.url,l)}" target="_blank" rel="noopener" data-item="${esc(p.name)}" data-place="${place}">
+     <span><b>${esc(p.name)}</b><small>${esc(p.cat)}</small></span><span class="arr">→</span></a>`).join('');
+
+function openProduct(i,j,btn){
+  const l=LOOKS[i], p=l.products[j], others=l.products.filter((_,k)=>k!==j);
+  body.innerHTML=`<p class="eyebrow">Worn by ${esc(l.name)} · ${esc(p.cat)}</p>
+    <h3>${esc(p.name)}</h3>
+    <a class="cta" href="${tag(p.url,l)}" target="_blank" rel="noopener" data-item="${esc(p.name)}" data-place="hotspot">Shop on on.ae <span aria-hidden="true">→</span></a>
+    ${others.length?`<div class="more"><p class="eyebrow">Also in this look</p>${rows(l,others,'also')}</div>`:''}`;
+  sheet.setAttribute('aria-label',p.name);
+  selBtn=btn; btn.classList.add('sel'); openIdx=i;
+  track('hotspot_tap',{ambassador:l.name,item_name:p.name});
+  openSheet();
+}
+function openLook(i){
+  const l=LOOKS[i];
+  body.innerHTML=`<p class="eyebrow">Shop the Look</p><h3>${esc(l.name)}</h3>
+    <div class="more">${rows(l,l.products,'look')}</div>`;
+  sheet.setAttribute('aria-label',`Shop the look: ${l.name}`); openIdx=i;
+  track('look_open',{ambassador:l.name});
+  openSheet();
+}
+
+/* ---------- Open / close ---------- */
+function openSheet(){
+  lastFocus=document.activeElement;
+  sheet.style.transform='';
+  sheet.classList.add('on'); scrim.classList.add('on');
+  feed.style.overflowY='hidden';
+  setTimeout(()=>sheet.focus({preventScroll:true}),50);
+}
+function closeSheet(){
+  sheet.style.transition='';
+  sheet.classList.remove('on'); scrim.classList.remove('on');
+  sheet.style.transform='';
+  feed.style.overflowY='';
+  if(selBtn){ selBtn.classList.remove('sel'); selBtn=null; }
+  if(lastFocus) lastFocus.focus({preventScroll:true});
+}
+scrim.addEventListener('click',closeSheet);
+sheet.addEventListener('click',e=>{
+  const a=e.target.closest('a[data-item]');
+  if(a) track('shop_click',{ambassador:LOOKS[openIdx].name,item_name:a.dataset.item,placement:a.dataset.place});
+});
+addEventListener('keydown',e=>{ if(e.key==='Escape' && sheet.classList.contains('on')) closeSheet(); });
+
+/* Swipe down to dismiss */
+let sy=null, dy=0, t0=0, dragged=false;
+sheet.addEventListener('pointerdown',e=>{
+  sy=e.clientY; dy=0; t0=performance.now(); dragged=false;
+  sheet.style.transition='none';
+});
+addEventListener('pointermove',e=>{
+  if(sy===null) return;
+  dy=Math.max(0,e.clientY-sy);
+  if(dy>6) dragged=true;
+  sheet.style.transform=`translateY(${dy}px)`;
+});
+function endDrag(){
+  if(sy===null) return;
+  const v=dy/Math.max(1,performance.now()-t0);
+  sy=null;
+  if(dy>90 || (v>.5 && dy>24)) closeSheet();
+  else { sheet.style.transition=''; sheet.style.transform=''; }
+}
+addEventListener('pointerup',endDrag);
+addEventListener('pointercancel',endDrag);
+sheet.addEventListener('click',e=>{ if(dragged){ e.preventDefault(); e.stopPropagation(); dragged=false; } },true);
+
+/* ---------- Edit mode: drag dots, copy coordinates back into LOOKS ---------- */
+if(EDIT){
+  document.body.classList.add('edit');
+  const out=$('out');
+  const dump=()=>out.textContent=LOOKS.map(l=>l.name+'\n'+l.products.map(p=>`  ${p.name}: x:${p.x.toFixed(2)}, y:${p.y.toFixed(2)}`).join('\n')).join('\n');
+  dump();
+  let drag=null;
+  feed.addEventListener('pointerdown',e=>{
+    const b=e.target.closest('.hs'); if(!b) return;
+    drag={b,s:b.closest('.look')}; b.setPointerCapture(e.pointerId); e.preventDefault();
+  });
+  feed.addEventListener('pointermove',e=>{
+    if(!drag) return;
+    const r=drag.s.getBoundingClientRect(), px=e.clientX-r.left, py=e.clientY-r.top;
+    drag.b.style.left=px+'px'; drag.b.style.top=py+'px';
+    const [x,y]=drag.s._inv(px,py), p=LOOKS[drag.s.dataset.i].products[drag.b.dataset.j];
+    p.x=clamp(x,0,1); p.y=clamp(y,0,1); dump();
+  });
+  feed.addEventListener('pointerup',()=>drag=null);
+  $('copy').addEventListener('click',()=>navigator.clipboard&&navigator.clipboard.writeText(out.textContent));
+}
+</script>
+</body>
+</html>
